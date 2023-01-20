@@ -1,4 +1,26 @@
 #!/usr/bin/env ruby
+mod = Module.new do
+  # 1. trapの定義場所をログに書き出す caller
+  # 2. trapのブロックを実行する前に、何らかのログを出す ブロックをwrapする
+  def trap(sig, command = nil, &block)
+    defined_from = caller[0]
+    puts "defined_from: #{defined_from}, sig:#{sig}, command:#{command}"
+
+    if command
+      super(sig, command)
+    else
+      super(sig) do
+        puts "sigtermが呼ばれたよ #{defined_from}"
+        block.call
+      end
+    end
+  end
+end
+
+Signal.singleton_class.prepend(mod)
+Kernel.singleton_class.prepend(mod)
+Signal.prepend(mod)
+Kernel.prepend(mod)
 
 # Quiet some warnings we see when running in warning mode:
 # RUBYOPT=-w bundle exec sidekiq
